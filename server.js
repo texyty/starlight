@@ -12,6 +12,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Clean route rewrites for Rockstar
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 app.get('/signin', (req, res) => res.sendFile(path.join(__dirname, 'signin.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'signup.html')));
@@ -20,7 +23,7 @@ app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'faq.html')));
 app.get('/license', (req, res) => res.sendFile(path.join(__dirname, 'license.html')));
 
 // Static files
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 
 // 1. Download launcher endpoint
 app.get('/download/launcher.exe', (req, res) => {
@@ -394,3 +397,5 @@ initDb().then(() => {
         console.log(`=======================================================`);
     });
 });
+
+module.exports = app;
