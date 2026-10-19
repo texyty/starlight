@@ -382,20 +382,24 @@ app.post('/api/v1/products/payment', (req, res) => {
 });
 
 // Start Server
-initDb().then(() => {
-    app.listen(PORT, () => {
-        console.log(`=======================================================`);
-        console.log(`[Rockstar 2.0 Server] Running on http://localhost:${PORT}`);
-        console.log(`[Main Page] http://localhost:${PORT}/`);
-        console.log(`[Profile Page] http://localhost:${PORT}/profile`);
-        console.log(`[Purchase Page] http://localhost:${PORT}/purchase.html`);
-        console.log(`[Sign In] http://localhost:${PORT}/signin.html`);
-        console.log(`[Launcher Verify API] http://localhost:${PORT}/api/launcher/verify`);
-        console.log(`[Supabase DB] aws-0-eu-west-1.pooler.supabase.com:5432`);
-        console.log(`[UID System] Sequential (1, 2, 3...)`);
-        console.log(`[Groups] user (no launch) | plus (launch ok) | admin (launch ok)`);
-        console.log(`=======================================================`);
+if (require.main === module) {
+    initDb().then(() => {
+        app.listen(PORT, () => {
+            console.log(`=======================================================`);
+            console.log(`[Rockstar 2.0 Server] Running on http://localhost:${PORT}`);
+            console.log(`[Main Page] http://localhost:${PORT}/`);
+            console.log(`[Profile Page] http://localhost:${PORT}/profile`);
+            console.log(`[Purchase Page] http://localhost:${PORT}/purchase.html`);
+            console.log(`[Sign In] http://localhost:${PORT}/signin.html`);
+            console.log(`[Launcher Verify API] http://localhost:${PORT}/api/launcher/verify`);
+            console.log(`[Supabase DB] aws-0-eu-west-1.pooler.supabase.com:5432`);
+            console.log(`[UID System] Sequential (1, 2, 3...)`);
+            console.log(`[Groups] user (no launch) | plus (launch ok) | admin (launch ok)`);
+            console.log(`=======================================================`);
+        });
     });
-});
+} else {
+    initDb().catch((err) => console.error('[Supabase Init]:', err.message));
+}
 
 module.exports = app;
