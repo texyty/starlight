@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель | Starlight</title>
+
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/main/sign_up.css">
+
+    <script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <script defer src="js/performance.js"></script>
+    <script defer src="js/auth.js"></script>
+
+    <style>
+        body {
+            background-color: #0c0c12;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .admin-wrapper {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .admin-header-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 32px;
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        .admin-title-box h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-title-box p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 800px) {
+            .admin-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .stat-val {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .table-container {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        .table-toolbar {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .search-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 14px;
+            width: 260px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #a855f7;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: #94a3b8;
+            font-weight: 600;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .select-group {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        .select-group option {
+            background: #181822;
+            color: #fff;
+        }
+        .btn-table {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-table:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .btn-table.danger {
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .btn-table.danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+        .btn-table.primary {
+            color: #c084fc;
+            border-color: rgba(168, 85, 247, 0.3);
+            background: rgba(168, 85, 247, 0.12);
+        }
+        .btn-table.primary:hover {
+            background: rgba(168, 85, 247, 0.25);
+        }
+        .badge-current {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html" class="logo-text" style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #a855f7, #3b82f6); color: #fff; font-size: 16px;"><i class="ph-fill ph-sparkle"></i></span>
+                <span style="font-size: 18px; font-weight: 700; color: #fff;">Starlight</span>
+            </a>
+        </div>
+        <ul>
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="profile.html">Мой профиль</a></li>
+            <li><a href="purchase.html">Покупка</a></li>
+        </ul>
+        <div class="header-actions">
+            <button onclick="location.href='profile.html'" class="button">В профиль</button>
+        </div>
+    </header>
+
+    <div class="admin-wrapper">
+        <div class="admin-header-card">
+            <div class="admin-title-box">
+                <h1><i class="ph-bold ph-shield-star" style="color: #fbbf24;"></i> Панель Администратора</h1>
+                <p>Управление пользователями, группами (user / plus / admin) и балансом</p>
+            </div>
+            <div>
+                <a href="profile.html" class="btn-table primary" style="padding: 10px 18px; font-size: 14px;">
+                    <i class="ph-bold ph-user"></i> Вернуться в профиль
+                </a>
+            </div>
+        </div>
+
+        <div class="admin-stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Всего аккаунтов</span>
+                <span class="stat-val" id="statTotalUsers">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Группа Plus</span>
+                <span class="stat-val" style="color: #c084fc;" id="statPlusUsers">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Администраторы</span>
+                <span class="stat-val" style="color: #fbbf24;" id="statAdminUsers">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Баланс в системе</span>
+                <span class="stat-val" style="color: #34d399;" id="statTotalMoney">0 ₽</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-toolbar">
+                <h3 style="font-size: 16px; font-weight: 600;">Список зарегистрированных пользователей</h3>
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по логину или UID..." oninput="filterUsers()">
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>UID</th>
+                            <th>Пользователь</th>
+                            <th>Группа доступа</th>
+                            <th>Баланс</th>
+                            <th>HWID</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 40px;">Загрузка данных из Supabase...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allUsers = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                window.location.href = 'signin.html';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            const isAuthAdmin = (currentUser.group === 'admin' || (currentUser.username && currentUser.username.toLowerCase() === 'texyty'));
+            if (!isAuthAdmin) {
+                alert('Доступ запрещен: требуется статус Администратора (texyty).');
+                window.location.href = 'profile.html';
+                return;
+            }
+
+            await loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`/api/admin/users?adminUsername=${encodeURIComponent(currentUser.username)}&adminUid=${currentUser.uid || currentUser.id}`);
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.error || 'Ошибка загрузки пользователей');
+                    return;
+                }
+                allUsers = data.users || [];
+                renderStats();
+                renderTable(allUsers);
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка соединения с сервером базы данных');
+            }
+        }
+
+        function renderStats() {
+            document.getElementById('statTotalUsers').textContent = allUsers.length;
+            const plusCount = allUsers.filter(u => u.group === 'plus').length;
+            const adminCount = allUsers.filter(u => u.group === 'admin').length;
+            const totalMoney = allUsers.reduce((sum, u) => sum + parseFloat(u.balance || 0), 0);
+
+            document.getElementById('statPlusUsers').textContent = plusCount;
+            document.getElementById('statAdminUsers').textContent = adminCount;
+            document.getElementById('statTotalMoney').textContent = totalMoney.toFixed(2) + ' ₽';
+        }
+
+        function renderTable(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 30px;">Пользователи не найдены</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const isMe = (u.username.toLowerCase() === currentUser.username.toLowerCase());
+                const group = (u.group || 'user').toLowerCase();
+                return `
+                    <tr>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #60a5fa;">#${u.uid || u.id}</td>
+                        <td style="font-weight: 600;">
+                            ${u.username}
+                            ${isMe ? '<span class="badge-current">ВЫ</span>' : ''}
+                        </td>
+                        <td>
+                            <select class="select-group" onchange="changeUserGroup(${u.uid || u.id}, this.value)">
+                                <option value="user" ${group === 'user' ? 'selected' : ''}>USER (запуск заблокирован)</option>
+                                <option value="plus" ${group === 'plus' ? 'selected' : ''}>PLUS (запуск разрешен)</option>
+                                <option value="admin" ${group === 'admin' ? 'selected' : ''}>ADMIN (полный доступ)</option>
+                            </select>
+                        </td>
+                        <td style="font-family: 'JetBrains Mono', monospace; color: #34d399; font-weight: 600;">
+                            ${u.balance} ₽
+                        </td>
+                        <td style="font-family: monospace; font-size: 12px; color: ${u.hwid ? '#94a3b8' : '#64748b'};">
+                            ${u.hwid || 'Не привязан'}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button class="btn-table" onclick="editUserBalance(${u.uid || u.id}, '${u.username}', ${u.balance})">
+                                    <i class="ph-bold ph-coins"></i> Баланс
+                                </button>
+                                ${u.hwid ? `
+                                <button class="btn-table primary" onclick="adminResetHwid(${u.uid || u.id}, '${u.username}')">
+                                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Сброс HWID
+                                </button>` : ''}
+                                ${!isMe ? `
+                                <button class="btn-table danger" onclick="deleteUser(${u.uid || u.id}, '${u.username}')">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterUsers() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!q) {
+                renderTable(allUsers);
+                return;
+            }
+            const filtered = allUsers.filter(u => 
+                u.username.toLowerCase().includes(q) || 
+                String(u.uid).includes(q) || 
+                String(u.id).includes(q)
+            );
+            renderTable(filtered);
+        }
+
+        async function changeUserGroup(targetUid, newGroup) {
+            try {
+                const res = await fetch('/api/admin/update-group', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminUsername: currentUser.username,
+                        adminUid: currentUser.uid || currentUser.id,
+                        targetUid,
+                        group: newGroup
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadUsers();
+                } else {
+                    alert(data.error || 'Ошибка смены группы');
+                }
+            } catch (err) {
+                alert('Ошибка соединения');
+            }
+        }
+
+        async function editUserBalance(targetUid, username, curBalance) {
+            const val = prompt(`Управление балансом пользователя ${username} (текущий: ${curBalance} ₽).\n\nВведите сумму (например, 500 для добавления, или укажите число):`, '199');
+            if (val === null) return;
+            const amount = parseFloat(val);
+            if (isNaN(amount)) {
+                alert('Некорректная сумма');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/update-balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminUsername: currentUser.username,
+                        adminUid: currentUser.uid || currentUser.id,
+                        targetUid,
+                        amount,
+                        mode: 'add'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    await loadUsers();
+                } else {
+                    alert(data.error || 'Ошибка обновления баланса');
+                }
+            } catch (err) {
+                alert('Ошибка соединения');
+            }
+        }
+
+        async function adminResetHwid(targetUid, username) {
+            if (!confirm(`Вы действительно хотите бесплатно сбросить HWID для ${username}?`)) return;
+            try {
+                const res = await fetch('/api/admin/reset-hwid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminUsername: currentUser.username,
+                        adminUid: currentUser.uid || currentUser.id,
+                        targetUid
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    await loadUsers();
+                } else {
+                    alert(data.error || 'Ошибка сброса HWID');
+                }
+            } catch (err) {
+                alert('Ошибка соединения');
+            }
+        }
+
+        async function deleteUser(targetUid, username) {
+            if (!confirm(`ВНИМАНИЕ! Удалить пользователя ${username} (UID: #${targetUid}) безвозвратно?`)) return;
+            try {
+                const res = await fetch('/api/admin/delete-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminUsername: currentUser.username,
+                        adminUid: currentUser.uid || currentUser.id,
+                        targetUid
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    await loadUsers();
+                } else {
+                    alert(data.error || 'Ошибка удаления');
+                }
+            } catch (err) {
+                alert('Ошибка соединения');
+            }
+        }
+    </script>
+</body>
+</html>

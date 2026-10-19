@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет | Rockstar 2.0</title>
+    <title>Личный кабинет | Starlight</title>
 
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="stylesheet" href="css/header.css">
@@ -17,7 +17,7 @@
 
     <style>
         .profile-container {
-            max-width: 680px;
+            max-width: 720px;
             margin: 40px auto;
             padding: 36px;
             background: rgba(18, 18, 24, 0.65);
@@ -51,14 +51,14 @@
             width: 72px;
             height: 72px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            background: linear-gradient(135deg, #a855f7, #3b82f6);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 28px;
             font-weight: 700;
             color: #fff;
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
         }
         .user-meta h2 {
             font-size: 24px;
@@ -189,14 +189,24 @@
             background: linear-gradient(135deg, rgba(108, 120, 225, 1), rgba(77, 88, 195, 1));
             box-shadow: 0 6px 24px rgba(94, 106, 210, 0.5);
         }
-        .btn-action.secondary-accent {
-            background: rgba(168, 85, 247, 0.12);
-            color: #c084fc;
-            border-color: rgba(168, 85, 247, 0.35);
+        .btn-action.success {
+            background: rgba(16, 185, 129, 0.14);
+            border-color: rgba(16, 185, 129, 0.38);
+            color: #34d399;
         }
-        .btn-action.secondary-accent:hover {
-            background: rgba(168, 85, 247, 0.22);
-            border-color: rgba(168, 85, 247, 0.55);
+        .btn-action.success:hover {
+            background: rgba(16, 185, 129, 0.24);
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+        .btn-action.admin-btn {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(202, 138, 4, 0.3));
+            border: 1px solid rgba(234, 179, 8, 0.5);
+            color: #fbbf24;
+            box-shadow: 0 4px 16px rgba(234, 179, 8, 0.2);
+        }
+        .btn-action.admin-btn:hover {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.35), rgba(202, 138, 4, 0.45));
+            box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35);
         }
         .btn-action.danger {
             color: #fca5a5;
@@ -211,14 +221,16 @@
 <body>
     <header>
         <div class="logo">
-            <a href="index.html" class="logo-text">
-                <img src="img/logo.png" alt="">Rockstar
-            </a>
+            <a href="index.html" class="logo-text" style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #a855f7, #3b82f6); color: #fff; font-size: 16px;"><i class="ph-fill ph-sparkle"></i></span>
+            <span style="font-size: 18px; font-weight: 700; color: #fff;">Starlight</span>
+        </a>
         </div>
         <ul>
             <li><a href="index.html">Главная</a></li>
             <li><a href="purchase.html">Покупка</a></li>
             <li><a href="faq.html">FAQ</a></li>
+            <li id="adminNavLi" style="display: none;"><a href="/admin" style="color: #fbbf24; font-weight: 600;"><i class="ph-bold ph-shield-star"></i> Админка</a></li>
         </ul>
         <div class="header-actions">
             <button onclick="logout()" class="button">Выйти</button>
@@ -245,16 +257,23 @@
                     <div class="val" id="profGroupName">—</div>
                 </div>
                 <div class="info-card">
-                    <div class="label">Доступ к запуску лаунчера</div>
+                    <div class="label">Доступ к лаунчеру</div>
                     <div class="val" id="profAccessStatus">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Баланс аккаунта</div>
+                    <div class="val" style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="color: #34d399; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 18px;"><span id="profBalance">0.00</span> ₽</span>
+                        <button onclick="topupPrompt()" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Пополнить</button>
+                    </div>
                 </div>
                 <div class="info-card">
                     <div class="label">Порядковый номер (UID)</div>
                     <div class="val" style="font-family: monospace; color: #60a5fa;" id="profUidValue">—</div>
                 </div>
-                <div class="info-card">
+                <div class="info-card" style="grid-column: span 2;">
                     <div class="label">Привязанный HWID</div>
-                    <div class="val" style="font-family: monospace;" id="profHwid">—</div>
+                    <div class="val" style="font-family: monospace; font-size: 14px; word-break: break-all;" id="profHwid">—</div>
                 </div>
             </div>
 
@@ -262,12 +281,15 @@
                 <a href="/download/launcher.exe" class="btn-action primary">
                     <i class="ph-bold ph-download-simple"></i> Скачать .EXE лаунчер
                 </a>
-                <button class="btn-action secondary-accent" onclick="toggleGroup()" id="btnToggleGroup">
-                    <i class="ph-bold ph-swap"></i> Сменить группу (user / plus / admin)
+                <button class="btn-action" onclick="resetHwidPaid()" id="btnResetHwid">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Сбросить HWID (199 ₽)
                 </button>
-                <button class="btn-action" onclick="resetHwid()">
-                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Сбросить HWID
+                <button class="btn-action success" onclick="topupPrompt()">
+                    <i class="ph-bold ph-wallet"></i> Пополнить баланс
                 </button>
+                <a href="/admin" class="btn-action admin-btn" id="btnAdminPanel" style="display: none;">
+                    <i class="ph-bold ph-shield-star"></i> Админ-меню
+                </a>
                 <button class="btn-action danger" onclick="logout()">
                     <i class="ph-bold ph-sign-out"></i> Выход
                 </button>
@@ -277,8 +299,8 @@
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Rockstar</h3>
-                    <p>© 2025 Rockstar Client. <br> Все права защищены</p>
+                    <h3>Starlight</h3>
+                    <p>© 2025 Starlight Client. <br> Все права защищены</p>
                 </div>
                 <div class="footer-section">
                     <h3>Платформа</h3>
@@ -298,9 +320,9 @@
                 <div class="footer-section">
                     <h3>Контакты</h3>
                     <ul>
-                        <li><a href="https://t.me/rockclient">Телеграм</a></li>
-                        <li><a href="https://discord.gg/HstudsDCkH">Дискорд</a></li>
-                        <li><a href="https://vk.com/rockstarclient">ВКонтакте</a></li>
+                        <li><a href="https://t.me/AromatNews">Телеграм</a></li>
+                        <li><a href="https://t.me/AromatNews">Дискорд</a></li>
+                        <li><a href="https://t.me/AromatNews">ВКонтакте</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -325,7 +347,6 @@
             try {
                 userData = JSON.parse(userStr);
                 renderUser(userData);
-                // Fetch fresh status from server
                 await refreshUserData();
             } catch(e) {
                 window.location.href = 'signin.html';
@@ -353,6 +374,7 @@
             const uid = user.uid || user.id || 1;
             const group = (user.group || user.user_group || 'user').toLowerCase();
             const isAllowed = (group === 'plus' || group === 'admin');
+            const isAdmin = (group === 'admin' || (user.username && user.username.toLowerCase() === 'texyty'));
 
             // Avatar & Name
             document.getElementById('profAvatar').textContent = (user.username || 'U')[0].toUpperCase();
@@ -390,41 +412,46 @@
                 accessEl.innerHTML = `<i class="ph-bold ph-prohibit"></i> Заблокирован (Требуется Plus или Admin)`;
             }
 
+            // Balance
+            document.getElementById('profBalance').textContent = parseFloat(user.balance || 0).toFixed(2);
+
             // HWID
             document.getElementById('profHwid').textContent = user.hwid || 'Не привязан';
-        }
 
-        async function toggleGroup() {
-            if (!userData) return;
-            const btn = document.getElementById('btnToggleGroup');
-            if (btn) btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/user/toggle-group', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: userData.id, uid: userData.uid })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    userData.group = data.group;
-                    userData.user_group = data.group;
-                    userData.allowed = data.allowed;
-                    userData.subscription_status = data.allowed ? 'ACTIVE' : 'NO_SUB';
-                    localStorage.setItem('user', JSON.stringify(userData));
-                    renderUser(userData);
-                } else {
-                    alert(data.error || 'Ошибка смены группы');
-                }
-            } catch(e) {
-                alert('Ошибка обращения к серверу');
-            } finally {
-                if (btn) btn.disabled = false;
+            // Admin panel visibility
+            const adminBtn = document.getElementById('btnAdminPanel');
+            const adminNav = document.getElementById('adminNavLi');
+            if (isAdmin) {
+                if (adminBtn) adminBtn.style.display = 'inline-flex';
+                if (adminNav) adminNav.style.display = 'inline-block';
+            } else {
+                if (adminBtn) adminBtn.style.display = 'none';
+                if (adminNav) adminNav.style.display = 'none';
             }
         }
 
-        async function resetHwid() {
+        async function resetHwidPaid() {
             if (!userData) return;
+            const curBal = parseFloat(userData.balance || 0);
+            const HWID_PRICE = 199;
+
+            if (!userData.hwid) {
+                alert('HWID еще не привязан к вашему аккаунту.');
+                return;
+            }
+
+            if (curBal < HWID_PRICE) {
+                const conf = confirm(`Сброс HWID стоит ${HWID_PRICE} ₽.\nВаш текущий баланс: ${curBal.toFixed(2)} ₽.\n\nНедостаточно средств. Хотите пополнить баланс прямо сейчас?`);
+                if (conf) topupPrompt();
+                return;
+            }
+
+            const confirmPay = confirm(`Вы уверены, что хотите сбросить HWID?\nС вашего баланса будет списано ${HWID_PRICE} ₽.`);
+            if (!confirmPay) return;
+
+            const btn = document.getElementById('btnResetHwid');
+            if (btn) btn.disabled = true;
+
             try {
                 const res = await fetch('/api/user/reset-hwid', {
                     method: 'POST',
@@ -434,12 +461,47 @@
                 const data = await res.json();
                 if (data.success) {
                     userData.hwid = null;
+                    userData.balance = data.balance;
                     localStorage.setItem('user', JSON.stringify(userData));
                     renderUser(userData);
-                    alert('HWID успешно сброшен!');
+                    alert(data.message || 'HWID успешно сброшен!');
+                } else {
+                    alert(data.error || 'Ошибка сброса HWID');
                 }
             } catch(e) {
-                alert('Ошибка сброса HWID');
+                alert('Ошибка обращения к серверу');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function topupPrompt() {
+            if (!userData) return;
+            const input = prompt('Введите сумму пополнения баланса (в рублях):', '199');
+            if (!input) return;
+            const amount = parseFloat(input);
+            if (isNaN(amount) || amount <= 0) {
+                alert('Пожалуйста, введите корректную сумму.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/user/topup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userData.id, uid: userData.uid, amount })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData.balance = data.balance;
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    renderUser(userData);
+                    alert(data.message);
+                } else {
+                    alert(data.error || 'Ошибка пополнения');
+                }
+            } catch(e) {
+                alert('Ошибка связи с сервером');
             }
         }
     </script>

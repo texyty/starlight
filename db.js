@@ -34,6 +34,7 @@ async function initDb() {
             );
             ALTER TABLE users ADD COLUMN IF NOT EXISTS uid INTEGER;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS user_group VARCHAR(32) DEFAULT 'user';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS balance NUMERIC(10, 2) DEFAULT 0.00;
         `);
 
         // Check if Admin exists, if not create default accounts

@@ -1,4 +1,4 @@
-// header.js — Rockstar Header & Navigation Controller
+// header.js — Starlight Header & Navigation Controller
 
 function initHeader() {
     const headerActions = document.querySelector('.header-actions');

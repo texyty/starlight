@@ -1,7 +1,7 @@
 {
-  "name": "rockstar-site",
+  "name": "starlight-site",
   "version": "2.0.0",
-  "description": "Rockstar 2.0 Official Website & Supabase Backend",
+  "description": "Starlight Official Website & Supabase Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

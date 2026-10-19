@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }));
 app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 
-// Clean route rewrites for Rockstar
+// Clean route rewrites for Starlight
 const getFilePath = (file) => {
     const pub = path.join(__dirname, 'public', file);
     return fs.existsSync(pub) ? pub : path.join(__dirname, file);
@@ -28,6 +28,7 @@ app.get(['/signup', '/signup.html'], (req, res) => res.sendFile(getFilePath('sig
 app.get(['/purchase', '/purchase.html'], (req, res) => res.sendFile(getFilePath('purchase.html')));
 app.get(['/faq', '/faq.html'], (req, res) => res.sendFile(getFilePath('faq.html')));
 app.get(['/license', '/license.html'], (req, res) => res.sendFile(getFilePath('license.html')));
+app.get(['/admin', '/admin.html'], (req, res) => res.sendFile(getFilePath('admin.html')));
 
 // 1. Download launcher endpoint
 app.get(['/download/launcher.exe', '/api/download/launcher.exe'], (req, res) => {
@@ -36,7 +37,7 @@ app.get(['/download/launcher.exe', '/api/download/launcher.exe'], (req, res) => 
         launcherPath = path.join(__dirname, '..', 'mp', 'NptProxy Launcher.exe');
     }
     if (fs.existsSync(launcherPath)) {
-        return res.download(launcherPath, 'Rockstar-Launcher.exe', (err) => {
+        return res.download(launcherPath, 'Starlight-Launcher.exe', (err) => {
             if (err && !res.headersSent) {
                 res.status(404).send('Лаунчер еще не собран или файл отсутствует.');
             }
@@ -54,7 +55,7 @@ app.get(['/api/status', '/status'], async (req, res) => {
         const dbCheck = await pool.query('SELECT NOW()');
         res.json({
             status: 'online',
-            service: 'Rockstar 2.0 Backend',
+            service: 'Starlight Backend',
             database: 'Supabase PostgreSQL connected',
             timestamp: dbCheck.rows[0].now
         });
@@ -83,13 +84,14 @@ const handleRegister = async (req, res) => {
         const nextUid = parseInt(uidRes.rows[0].next_uid, 10);
 
         const result = await pool.query(`
-            INSERT INTO users (uid, username, password, user_group, subscription_status, subscription_type, role)
-            VALUES ($1, $2, $3, 'user', 'NO_SUB', 'user', 'user')
-            RETURNING uid, id, username, user_group, created_at
+            INSERT INTO users (uid, username, password, user_group, subscription_status, subscription_type, role, balance)
+            VALUES ($1, $2, $3, 'user', 'NO_SUB', 'user', 'user', 0.00)
+            RETURNING uid, id, username, user_group, balance, created_at
         `, [nextUid, username, password]);
 
         const user = result.rows[0];
         user.group = user.user_group;
+        user.balance = parseFloat(user.balance || 0).toFixed(2);
 
         res.json({
             success: true,
@@ -103,8 +105,7 @@ const handleRegister = async (req, res) => {
     }
 };
 
-app.post('/api/auth/register', handleRegister);
-app.post('/auth/signup', handleRegister);
+app.post(['/api/auth/register', '/auth/signup', '/auth/register'], handleRegister);
 
 // 4. User Login
 const handleLogin = async (req, res) => {
@@ -117,7 +118,7 @@ const handleLogin = async (req, res) => {
 
     try {
         const result = await pool.query(`
-            SELECT uid, id, username, password, user_group, hwid, created_at, last_login
+            SELECT uid, id, username, password, user_group, balance, hwid, created_at, last_login
             FROM users
             WHERE LOWER(username) = LOWER($1)
         `, [username]);
@@ -130,6 +131,7 @@ const handleLogin = async (req, res) => {
         delete user.password;
         user.group = (user.user_group || 'user').toLowerCase();
         user.uid = user.uid || user.id;
+        user.balance = parseFloat(user.balance || 0).toFixed(2);
 
         await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
@@ -145,20 +147,20 @@ const handleLogin = async (req, res) => {
     }
 };
 
-app.post('/api/auth/login', handleLogin);
-app.post('/authorization', handleLogin);
+app.post(['/api/auth/login', '/authorization', '/auth/login'], handleLogin);
 
 // 5. User details
 app.get(['/api/account/details', '/account/details'], async (req, res) => {
     const userId = req.query.id || req.query.uid;
     if (!userId) return res.status(400).json({ error: 'User ID missing' });
     try {
-        const result = await pool.query('SELECT uid, id, username, user_group, hwid FROM users WHERE id = $1 OR uid = $2', [userId, userId]);
+        const result = await pool.query('SELECT uid, id, username, user_group, balance, hwid FROM users WHERE id = $1 OR uid = $2', [userId, userId]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
         const user = result.rows[0];
         user.group = (user.user_group || 'user').toLowerCase();
         user.allowed = (user.group === 'plus' || user.group === 'admin');
         user.subscription_status = user.allowed ? 'ACTIVE' : 'NO_SUB';
+        user.balance = parseFloat(user.balance || 0).toFixed(2);
         res.json({ success: true, user });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -280,18 +282,199 @@ app.post(['/api/user/toggle-group', '/api/user/toggle-sub', '/user/toggle-group'
     }
 });
 
-// 8. Reset HWID
+// 8. Reset HWID — стоимость 199 рублей
 app.post(['/api/user/reset-hwid', '/user/reset-hwid'], async (req, res) => {
     const { userId, uid } = req.body;
+    const HWID_COST = 199.00;
+
     try {
-        await pool.query('UPDATE users SET hwid = NULL WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
-        res.json({ success: true, message: 'Привязка HWID успешно сброшена' });
+        const userRes = await pool.query('SELECT id, uid, username, user_group, hwid, balance FROM users WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+
+        const user = userRes.rows[0];
+        const currentBalance = parseFloat(user.balance || 0);
+
+        if (!user.hwid) {
+            return res.status(400).json({ success: false, error: 'HWID еще не привязан к аккаунту' });
+        }
+
+        if (currentBalance < HWID_COST) {
+            return res.status(400).json({
+                success: false,
+                cost: HWID_COST,
+                balance: currentBalance.toFixed(2),
+                error: `Недостаточно средств. Сброс HWID стоит ${HWID_COST} ₽. Ваш баланс: ${currentBalance.toFixed(2)} ₽. Пополните баланс для сброса.`
+            });
+        }
+
+        // Списываем 199 ₽ и сбрасываем HWID
+        const updated = await pool.query(`
+            UPDATE users
+            SET balance = balance - $1, hwid = NULL
+            WHERE id = $2
+            RETURNING balance
+        `, [HWID_COST, user.id]);
+
+        const newBalance = parseFloat(updated.rows[0].balance).toFixed(2);
+        res.json({
+            success: true,
+            balance: newBalance,
+            message: `HWID успешно сброшен! Списано ${HWID_COST} ₽. Остаток на балансе: ${newBalance} ₽`
+        });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// 9. In-Memory Web Login Sessions
+// 9. Topup Balance (пополнение счета)
+app.post(['/api/user/topup', '/user/topup'], async (req, res) => {
+    const { userId, uid, amount } = req.body;
+    const addVal = parseFloat(amount);
+    if (isNaN(addVal) || addVal <= 0) {
+        return res.status(400).json({ success: false, error: 'Укажите положительную сумму' });
+    }
+
+    try {
+        const userRes = await pool.query('SELECT id, uid FROM users WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+
+        const updated = await pool.query(`
+            UPDATE users
+            SET balance = balance + $1
+            WHERE id = $2
+            RETURNING balance
+        `, [addVal, userRes.rows[0].id]);
+
+        const newBal = parseFloat(updated.rows[0].balance).toFixed(2);
+        res.json({
+            success: true,
+            balance: newBal,
+            message: `Баланс успешно пополнен на ${addVal.toFixed(2)} ₽! Новый баланс: ${newBal} ₽`
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 10. Admin Endpoints (для texyty и группы admin)
+const checkAdminAuth = async (req, res, next) => {
+    const adminUser = (req.body.adminUsername || req.query.adminUsername || req.headers['x-admin-user'] || '').trim();
+    const adminUid = req.body.adminUid || req.query.adminUid;
+
+    try {
+        let q = 'SELECT uid, username, user_group FROM users WHERE LOWER(username) = LOWER($1)';
+        let params = [adminUser || 'texyty'];
+        if (adminUid) {
+            q = 'SELECT uid, username, user_group FROM users WHERE uid = $1 OR LOWER(username) = LOWER($2)';
+            params = [adminUid, adminUser || 'texyty'];
+        }
+        const r = await pool.query(q, params);
+        if (r.rows.length === 0) {
+            return res.status(403).json({ success: false, error: 'Доступ запрещен: администратор не найден' });
+        }
+        const u = r.rows[0];
+        const isAuth = (u.user_group === 'admin' || u.username.toLowerCase() === 'texyty');
+        if (!isAuth) {
+            return res.status(403).json({ success: false, error: 'Недостаточно прав администратора' });
+        }
+        next();
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+};
+
+// Admin: Get all users
+app.get(['/api/admin/users', '/admin/users'], checkAdminAuth, async (req, res) => {
+    try {
+        const usersRes = await pool.query(`
+            SELECT uid, id, username, user_group, balance, hwid, created_at, last_login
+            FROM users
+            ORDER BY uid ASC NULLS LAST
+        `);
+        const users = usersRes.rows.map(u => ({
+            ...u,
+            group: u.user_group,
+            balance: parseFloat(u.balance || 0).toFixed(2)
+        }));
+        res.json({ success: true, users });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Admin: Update group of any user
+app.post(['/api/admin/update-group', '/admin/update-group'], checkAdminAuth, async (req, res) => {
+    const { targetUid, group } = req.body;
+    const newGroup = (group || 'user').toLowerCase();
+    if (!['user', 'plus', 'admin'].includes(newGroup)) {
+        return res.status(400).json({ success: false, error: 'Неверная группа (допустимо: user, plus, admin)' });
+    }
+    try {
+        const isAllowed = (newGroup === 'plus' || newGroup === 'admin');
+        const subStatus = isAllowed ? 'ACTIVE' : 'NO_SUB';
+        const updated = await pool.query(`
+            UPDATE users
+            SET user_group = $1, subscription_status = $2, subscription_type = $3, role = $4
+            WHERE uid = $5 OR id = $5
+            RETURNING uid, username, user_group, balance
+        `, [newGroup, subStatus, newGroup.toUpperCase(), newGroup, targetUid]);
+
+        if (updated.rows.length === 0) return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        res.json({ success: true, user: updated.rows[0], message: `Группа пользователя изменена на [${newGroup.toUpperCase()}]` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Admin: Update balance of any user
+app.post(['/api/admin/update-balance', '/admin/update-balance'], checkAdminAuth, async (req, res) => {
+    const { targetUid, amount, mode } = req.body; // mode: 'set' | 'add'
+    const val = parseFloat(amount);
+    if (isNaN(val)) return res.status(400).json({ success: false, error: 'Некорректная сумма' });
+
+    try {
+        let query = 'UPDATE users SET balance = $1 WHERE uid = $2 OR id = $2 RETURNING uid, username, balance';
+        if (mode === 'add') {
+            query = 'UPDATE users SET balance = balance + $1 WHERE uid = $2 OR id = $2 RETURNING uid, username, balance';
+        }
+        const updated = await pool.query(query, [val, targetUid]);
+        if (updated.rows.length === 0) return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        const newBal = parseFloat(updated.rows[0].balance).toFixed(2);
+        res.json({ success: true, balance: newBal, message: `Баланс пользователя ${updated.rows[0].username} обновлен: ${newBal} ₽` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Admin: Free reset HWID for any user
+app.post(['/api/admin/reset-hwid', '/admin/reset-hwid'], checkAdminAuth, async (req, res) => {
+    const { targetUid } = req.body;
+    try {
+        const updated = await pool.query('UPDATE users SET hwid = NULL WHERE uid = $1 OR id = $1 RETURNING username', [targetUid]);
+        if (updated.rows.length === 0) return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        res.json({ success: true, message: `HWID пользователя ${updated.rows[0].username} успешно сброшен администратором` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Admin: Delete user
+app.post(['/api/admin/delete-user', '/admin/delete-user'], checkAdminAuth, async (req, res) => {
+    const { targetUid } = req.body;
+    try {
+        const delRes = await pool.query('DELETE FROM users WHERE uid = $1 OR id = $1 RETURNING username', [targetUid]);
+        if (delRes.rows.length === 0) return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        res.json({ success: true, message: `Пользователь ${delRes.rows[0].username} удален` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 11. In-Memory Web Login Sessions
 const launcherSessions = new Map();
 
 app.post('/api/launcher/request-session', (req, res) => {
@@ -365,13 +548,13 @@ app.post('/api/launcher/authorize-session', async (req, res) => {
     }
 });
 
-// 10. Rockstar Products API (for purchase.html)
+// 10. Starlight Products API (for purchase.html)
 app.get('/api/v1/internal/customization/products/getAll', (req, res) => {
     res.json({
         success: true,
         products: [
-            { id: 'rockstar_plus', name: 'Rockstar Plus', price: 499, duration: 30, version: '2.0.4' },
-            { id: 'rockstar_admin', name: 'Rockstar Admin Upgrade', price: 1499, duration: 9999, version: '2.0.4' }
+            { id: 'starlight_plus', name: 'Starlight Plus', price: 499, duration: 30, version: '2.0.4' },
+            { id: 'starlight_admin', name: 'Starlight Admin Upgrade', price: 1499, duration: 9999, version: '2.0.4' }
         ]
     });
 });
@@ -390,9 +573,10 @@ if (require.main === module) {
     initDb().then(() => {
         app.listen(PORT, () => {
             console.log(`=======================================================`);
-            console.log(`[Rockstar 2.0 Server] Running on http://localhost:${PORT}`);
+            console.log(`[Starlight Server] Running on http://localhost:${PORT}`);
             console.log(`[Main Page] http://localhost:${PORT}/`);
             console.log(`[Profile Page] http://localhost:${PORT}/profile`);
+            console.log(`[Admin Page] http://localhost:${PORT}/admin`);
             console.log(`[Purchase Page] http://localhost:${PORT}/purchase.html`);
             console.log(`[Sign In] http://localhost:${PORT}/signin.html`);
             console.log(`[Launcher Verify API] http://localhost:${PORT}/api/launcher/verify`);

@@ -1,4 +1,4 @@
-// auth.js — Rockstar Authentication & Session Handler
+// auth.js — Starlight Authentication & Session Handler
 
 function checkAuth() {
     const user = localStorage.getItem('user');
