@@ -197,13 +197,40 @@ app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
         const user = result.rows[0];
         const userUid = user.uid || user.id;
 
-        // Update HWID if provided and not yet bound
-        if (hwid && !user.hwid) {
-            await pool.query('UPDATE users SET hwid = $1, last_login = NOW() WHERE id = $2', [hwid, user.id]);
-            user.hwid = hwid;
+        // РЕАЛЬНАЯ ПРОВЕРКА И ПРИВЯЗКА HWID:
+        if (user.hwid) {
+            // Если HWID уже привязан к аккаунту
+            if (!hwid || !hwid.trim()) {
+                return res.status(403).json({
+                    success: false,
+                    allowed: false,
+                    hwid_error: true,
+                    error: 'Ошибка безопасности: устройство не передало HWID. Запуск заблокирован.'
+                });
+            }
+
+            const storedHwid = user.hwid.trim().toUpperCase();
+            const clientHwid = hwid.trim().toUpperCase();
+
+            if (storedHwid !== clientHwid) {
+                return res.status(403).json({
+                    success: false,
+                    allowed: false,
+                    hwid_error: true,
+                    error: `Ошибка привязки HWID! Аккаунт привязан к другому ПК.\nПривязанный HWID: ${storedHwid.substring(0, 15)}...\nТекущий HWID: ${clientHwid.substring(0, 15)}...\nСбросьте HWID в личном кабинете на сайте (199 ₽).`
+                });
+            }
         } else {
-            await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+            // HWID еще не привязан — автоматически ПРИВЯЗЫВАЕМ текущее устройство к аккаунту при первом входе
+            if (hwid && hwid.trim()) {
+                const cleanHwid = hwid.trim().toUpperCase();
+                await pool.query('UPDATE users SET hwid = $1 WHERE id = $2', [cleanHwid, user.id]);
+                user.hwid = cleanHwid;
+            }
         }
+
+        // Обновляем время входа
+        await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
         const group = (user.user_group || 'user').toLowerCase();
 
@@ -216,6 +243,7 @@ app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
                 allowed: false, // запуск строго запрещен для группы 'user'
                 uid: userUid,
                 username: user.username,
+                hwid: user.hwid,
                 group: 'user',
                 role: 'user',
                 subscription_status: 'NO_SUB',
@@ -230,6 +258,7 @@ app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
             allowed: true, // доступ разрешен
             uid: userUid,
             username: user.username,
+            hwid: user.hwid,
             group: group,
             role: group.toUpperCase(),
             subscription_status: 'ACTIVE',
@@ -323,6 +352,32 @@ app.post(['/api/user/reset-hwid', '/user/reset-hwid'], async (req, res) => {
             balance: newBalance,
             message: `HWID успешно сброшен! Списано ${HWID_COST} ₽. Остаток на балансе: ${newBalance} ₽`
         });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 8.1. Bind HWID (привязка HWID к аккаунту)
+app.post(['/api/user/bind-hwid', '/user/bind-hwid'], async (req, res) => {
+    const { userId, uid, hwid } = req.body;
+    if (!hwid || !hwid.trim()) {
+        return res.status(400).json({ success: false, error: 'HWID не указан' });
+    }
+    try {
+        const userRes = await pool.query('SELECT id, uid, hwid FROM users WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+        const user = userRes.rows[0];
+        const cleanHwid = hwid.trim().toUpperCase();
+        if (user.hwid && user.hwid.trim().toUpperCase() !== cleanHwid) {
+            return res.status(400).json({
+                success: false,
+                error: 'К аккаунту уже привязан другой HWID. Сначала выполните сброс HWID.'
+            });
+        }
+        await pool.query('UPDATE users SET hwid = $1 WHERE id = $2', [cleanHwid, user.id]);
+        res.json({ success: true, hwid: cleanHwid, message: 'HWID успешно привязан к вашему аккаунту!' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

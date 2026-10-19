@@ -416,7 +416,12 @@
             document.getElementById('profBalance').textContent = parseFloat(user.balance || 0).toFixed(2);
 
             // HWID
-            document.getElementById('profHwid').textContent = user.hwid || 'Не привязан';
+            const hwidEl = document.getElementById('profHwid');
+            if (user.hwid) {
+                hwidEl.innerHTML = `<span style="color:#10b981; margin-right:6px;">●</span><span style="user-select:all;">${user.hwid}</span> <span style="display:inline-block; margin-left:8px; font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(16,185,129,0.15); color:#10b981;">Привязан к ПК</span>`;
+            } else {
+                hwidEl.innerHTML = `<span style="color:#f59e0b; margin-right:6px;">○</span><span style="color:var(--text-other-color);">Не привязан</span> <span style="display:inline-block; margin-left:8px; font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.15); color:#f59e0b;">Привяжется автоматически при первом запуске лаунчера</span>`;
+            }
 
             // Admin panel visibility
             const adminBtn = document.getElementById('btnAdminPanel');
