@@ -1,0 +1,193 @@
+/* ===== AUTH FORMS (SIGN IN / SIGN UP / RECOVERY) ===== */
+
+main {
+    padding-top: 90px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.main-sect {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    flex: 1;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 38px 34px;
+    border-radius: 28px;
+    background: rgba(18, 18, 24, 0.65);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+.form-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    padding: 1px;
+    background: linear-gradient(149deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.15) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.form-container .text {
+    margin-bottom: 28px;
+    text-align: center;
+}
+
+.form-container .text h2 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.form-container .text p {
+    font-size: 14px;
+    color: var(--text-other-color);
+    line-height: 1.5;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-other-color);
+    letter-spacing: -0.1px;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.label-row .forgot {
+    font-size: 12px;
+    color: var(--text-desc-on);
+    transition: color 0.2s;
+}
+
+.label-row .forgot:hover {
+    color: #fff;
+}
+
+.input-wrapper {
+    position: relative;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.05);
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 14px;
+}
+
+.input-wrapper input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-desc-on);
+    margin: 4px 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    accent-color: #5e6ad2;
+    cursor: pointer;
+}
+
+.checkbox-group .link {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(94, 106, 210, 0.9), rgba(67, 78, 179, 0.9));
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 18px rgba(94, 106, 210, 0.3);
+}
+
+.submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(94, 106, 210, 0.45);
+    background: linear-gradient(135deg, rgba(108, 120, 225, 0.95), rgba(77, 88, 195, 0.95));
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.error-message {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+}
+
+.account {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-other-color);
+}
+
+.account a {
+    color: #fff;
+    font-weight: 500;
+    margin-left: 4px;
+    text-decoration: underline;
+}

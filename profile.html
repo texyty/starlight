@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет | Rockstar 2.0</title>
+
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/main/sign_up.css">
+
+    <script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <script defer src="js/performance.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/header.js"></script>
+
+    <style>
+        .profile-container {
+            max-width: 680px;
+            margin: 40px auto;
+            padding: 36px;
+            background: rgba(18, 18, 24, 0.65);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 28px;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+        }
+        .profile-container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            padding: 1px;
+            background: linear-gradient(149deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.15) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .user-avatar-big {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+        }
+        .user-meta h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .user-badges {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .badge-admin {
+            background: rgba(234, 179, 8, 0.18);
+            color: #fbbf24;
+            border: 1px solid rgba(234, 179, 8, 0.45);
+            box-shadow: 0 0 16px rgba(234, 179, 8, 0.25);
+        }
+        .badge-plus {
+            background: rgba(168, 85, 247, 0.18);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.45);
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+        }
+        .badge-user {
+            background: rgba(148, 163, 184, 0.12);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .badge-uid {
+            background: rgba(59, 130, 246, 0.16);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .info-card {
+            padding: 18px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .info-card .label {
+            font-size: 12px;
+            color: var(--text-desc-on);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-card .val {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .access-allowed {
+            color: #10b981 !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .access-blocked {
+            color: #ef4444 !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            flex: 1;
+            min-width: 160px;
+            padding: 13px 18px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .btn-action.primary {
+            background: linear-gradient(135deg, rgba(94, 106, 210, 0.95), rgba(67, 78, 179, 0.95));
+            border: none;
+            box-shadow: 0 4px 18px rgba(94, 106, 210, 0.35);
+        }
+        .btn-action.primary:hover {
+            background: linear-gradient(135deg, rgba(108, 120, 225, 1), rgba(77, 88, 195, 1));
+            box-shadow: 0 6px 24px rgba(94, 106, 210, 0.5);
+        }
+        .btn-action.secondary-accent {
+            background: rgba(168, 85, 247, 0.12);
+            color: #c084fc;
+            border-color: rgba(168, 85, 247, 0.35);
+        }
+        .btn-action.secondary-accent:hover {
+            background: rgba(168, 85, 247, 0.22);
+            border-color: rgba(168, 85, 247, 0.55);
+        }
+        .btn-action.danger {
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .btn-action.danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html" class="logo-text">
+                <img src="img/logo.png" alt="">Rockstar
+            </a>
+        </div>
+        <ul>
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="purchase.html">Покупка</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+        </ul>
+        <div class="header-actions">
+            <button onclick="logout()" class="button">Выйти</button>
+            <button class="open-ul"><i class="ph-bold ph-list"></i></button>
+        </div>
+    </header>
+
+    <main>
+        <div class="profile-container" id="profileContent">
+            <div class="user-header">
+                <div class="user-avatar-big" id="profAvatar">U</div>
+                <div class="user-meta">
+                    <h2 id="profUsername">Загрузка...</h2>
+                    <div class="user-badges">
+                        <span class="badge" id="profGroupBadge"><i class="ph-bold ph-circle-notch"></i> ...</span>
+                        <span class="badge badge-uid" id="profUidBadge"><i class="ph-bold ph-identification-badge"></i> UID: #—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="label">Группа аккаунта</div>
+                    <div class="val" id="profGroupName">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Доступ к запуску лаунчера</div>
+                    <div class="val" id="profAccessStatus">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Порядковый номер (UID)</div>
+                    <div class="val" style="font-family: monospace; color: #60a5fa;" id="profUidValue">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Привязанный HWID</div>
+                    <div class="val" style="font-family: monospace;" id="profHwid">—</div>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <a href="/download/launcher.exe" class="btn-action primary">
+                    <i class="ph-bold ph-download-simple"></i> Скачать .EXE лаунчер
+                </a>
+                <button class="btn-action secondary-accent" onclick="toggleGroup()" id="btnToggleGroup">
+                    <i class="ph-bold ph-swap"></i> Сменить группу (user / plus / admin)
+                </button>
+                <button class="btn-action" onclick="resetHwid()">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Сбросить HWID
+                </button>
+                <button class="btn-action danger" onclick="logout()">
+                    <i class="ph-bold ph-sign-out"></i> Выход
+                </button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Rockstar</h3>
+                    <p>© 2025 Rockstar Client. <br> Все права защищены</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Платформа</h3>
+                    <ul>
+                        <li><a href="index.html">Главная</a></li>
+                        <li><a href="purchase.html">Покупка</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Аккаунт</h3>
+                    <ul>
+                        <li><a href="signin.html">Вход</a></li>
+                        <li><a href="signup.html">Регистрация</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Контакты</h3>
+                    <ul>
+                        <li><a href="https://t.me/rockclient">Телеграм</a></li>
+                        <li><a href="https://discord.gg/HstudsDCkH">Дискорд</a></li>
+                        <li><a href="https://vk.com/rockstarclient">ВКонтакте</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Соглашения</h3>
+                    <ul>
+                        <li><a href="license.html">Лицензионное соглашение</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        let userData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                window.location.href = 'signin.html';
+                return;
+            }
+            try {
+                userData = JSON.parse(userStr);
+                renderUser(userData);
+                // Fetch fresh status from server
+                await refreshUserData();
+            } catch(e) {
+                window.location.href = 'signin.html';
+            }
+        });
+
+        async function refreshUserData() {
+            if (!userData) return;
+            try {
+                const targetId = userData.uid || userData.id;
+                const res = await fetch(`/api/account/details?uid=${targetId}`);
+                const data = await res.json();
+                if (data.success && data.user) {
+                    userData = Object.assign(userData, data.user);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    renderUser(userData);
+                }
+            } catch (e) {
+                console.warn('Could not refresh user profile from server:', e);
+            }
+        }
+
+        function renderUser(user) {
+            if (!user) return;
+            const uid = user.uid || user.id || 1;
+            const group = (user.group || user.user_group || 'user').toLowerCase();
+            const isAllowed = (group === 'plus' || group === 'admin');
+
+            // Avatar & Name
+            document.getElementById('profAvatar').textContent = (user.username || 'U')[0].toUpperCase();
+            document.getElementById('profUsername').textContent = user.username;
+
+            // UID Badges
+            document.getElementById('profUidBadge').innerHTML = `<i class="ph-bold ph-identification-badge"></i> UID: #${uid}`;
+            document.getElementById('profUidValue').textContent = `#${uid}`;
+
+            // Group Badge
+            const groupBadge = document.getElementById('profGroupBadge');
+            const groupNameEl = document.getElementById('profGroupName');
+            
+            if (group === 'admin') {
+                groupBadge.className = 'badge badge-admin';
+                groupBadge.innerHTML = `<i class="ph-bold ph-shield-check"></i> ADMIN`;
+                groupNameEl.innerHTML = `<span style="color: #fbbf24; font-weight: 700;">ADMIN</span> (Полный доступ)`;
+            } else if (group === 'plus') {
+                groupBadge.className = 'badge badge-plus';
+                groupBadge.innerHTML = `<i class="ph-bold ph-star"></i> PLUS`;
+                groupNameEl.innerHTML = `<span style="color: #c084fc; font-weight: 700;">PLUS</span> (Подписка активна)`;
+            } else {
+                groupBadge.className = 'badge badge-user';
+                groupBadge.innerHTML = `<i class="ph-bold ph-user"></i> USER`;
+                groupNameEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">USER</span> (Обычный пользователь)`;
+            }
+
+            // Launcher Access Status
+            const accessEl = document.getElementById('profAccessStatus');
+            if (isAllowed) {
+                accessEl.className = 'val access-allowed';
+                accessEl.innerHTML = `<i class="ph-bold ph-check-circle"></i> Разрешен (Группа ${group.toUpperCase()})`;
+            } else {
+                accessEl.className = 'val access-blocked';
+                accessEl.innerHTML = `<i class="ph-bold ph-prohibit"></i> Заблокирован (Требуется Plus или Admin)`;
+            }
+
+            // HWID
+            document.getElementById('profHwid').textContent = user.hwid || 'Не привязан';
+        }
+
+        async function toggleGroup() {
+            if (!userData) return;
+            const btn = document.getElementById('btnToggleGroup');
+            if (btn) btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/user/toggle-group', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userData.id, uid: userData.uid })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData.group = data.group;
+                    userData.user_group = data.group;
+                    userData.allowed = data.allowed;
+                    userData.subscription_status = data.allowed ? 'ACTIVE' : 'NO_SUB';
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    renderUser(userData);
+                } else {
+                    alert(data.error || 'Ошибка смены группы');
+                }
+            } catch(e) {
+                alert('Ошибка обращения к серверу');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function resetHwid() {
+            if (!userData) return;
+            try {
+                const res = await fetch('/api/user/reset-hwid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userData.id, uid: userData.uid })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData.hwid = null;
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    renderUser(userData);
+                    alert('HWID успешно сброшен!');
+                }
+            } catch(e) {
+                alert('Ошибка сброса HWID');
+            }
+        }
+    </script>
+</body>
+</html>

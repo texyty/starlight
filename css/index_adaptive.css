@@ -1,0 +1,18 @@
+/* ===== RESPONSIVE STYLES FOR MAIN PAGE ===== */
+@media (max-width: 1180px) {
+    main { padding: 90px 6% 0; }
+    .right-events { display: none; }
+    .server-events, .music, .other-statuses { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .main-sect h1 { font-size: 36px; }
+    .highlight .text-content { font-size: 20px; }
+    .stats { flex-direction: column; gap: 20px; }
+    .stats .users h2, .stats .launches h2 { font-size: 32px; }
+    .island .upper h1 { font-size: 28px; }
+    .server-text h1, .music-text h1, .other-text h1 { font-size: 24px; }
+    .music-stack { height: auto; }
+    .highlight.music-bg { display: none; }
+    .highlight.music-front { position: static; }
+}

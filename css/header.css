@@ -1,0 +1,128 @@
+@import url('https://v1.fontapi.ir/css/SFProDisplay');
+
+* {
+    margin: 0; padding: 0;
+    text-decoration: none;
+    box-sizing: border-box;
+    list-style: none;
+    scroll-behavior: smooth;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+    --text-color: rgba(255,255,255,0.9);
+    --text-other-color: rgba(255,255,255,0.7);
+    --text-desc: rgba(185,185,185,0.9);
+    --text-desc-on: rgba(185,185,185,0.9);
+    --border: rgba(255,255,255,0.06);
+    --accent: #5e6ad2;
+    --accent-glow: rgba(94, 106, 210, 0.4);
+}
+
+body {
+    background: #000;
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; background: #000; }
+::-webkit-scrollbar-thumb { background: rgb(73,73,73); border-radius: 20px; }
+::-webkit-scrollbar-button { display: none; }
+img { -webkit-user-drag: none; }
+
+/* ===== HEADER ===== */
+header {
+    position: fixed; top: 0; left: 0;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 12%;
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(10, 10, 15, 0.65);
+    z-index: 100;
+}
+
+header .open-ul { display: none; }
+
+header .logo-text {
+    display: flex; align-items: center; gap: 12px;
+    text-decoration: none; color: inherit;
+    font-size: 20px; font-weight: 600;
+    letter-spacing: -0.3px;
+    transition: color .2s ease, transform .2s ease;
+}
+header .logo-text img {
+    width: 28px; height: 28px;
+    object-fit: contain; display: block;
+    border-radius: 6px;
+}
+
+header ul {
+    display: flex; align-items: center; gap: 28px;
+}
+header li a {
+    color: var(--text-other-color);
+    font-weight: 400; font-size: 15px;
+    transition: color 0.2s ease;
+}
+header li a:hover, header li a.active {
+    color: #fff;
+}
+
+header .header-actions {
+    display: flex; align-items: center; gap: 12px;
+}
+
+header .button {
+    position: relative; padding: 10px 24px;
+    border-radius: 40px; background: rgba(25, 25, 30, 0.7);
+    border: none; overflow: hidden;
+    color: var(--text-color); font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: 0.2s ease-in-out;
+}
+header .button::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: 40px; padding: 1px;
+    background: linear-gradient(149deg, #fff -10%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, #fff 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+header .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    background: rgba(35, 35, 45, 0.85);
+}
+
+.profile-button {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 16px; border-radius: 40px;
+    background: rgba(25, 25, 30, 0.7);
+    cursor: pointer; transition: 0.2s ease-in-out;
+    position: relative; overflow: hidden;
+    text-decoration: none;
+}
+.profile-button::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: 40px; padding: 1px;
+    background: linear-gradient(149deg, #fff -10%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, #fff 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+.profile-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    background: rgba(35, 35, 45, 0.85);
+}
+.profile-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff;
+}
+.profile-name {
+    color: var(--text-color); font-size: 15px; font-weight: 500;
+}
