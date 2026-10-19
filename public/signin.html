@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- Meta -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Performance -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preload" href="img/logo.png" as="image" fetchpriority="high">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main/sign_up.css" data-critical>
+    <link rel="stylesheet" href="css/header.css" data-critical>
+    <link rel="stylesheet" href="css/footer.css" data-async data-original-media="all" media="print" onload="this.onload=null;this.media='all'">
+    <link rel="stylesheet" href="css/sign_adaptive.css" data-async data-original-media="all" media="print" onload="this.onload=null;this.media='all'">
+
+    <!-- Phosphor Icons -->
+    <script defer src="js/performance.js"></script>
+    <script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
+    <script defer src="js/form-anim.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/auth-check.js"></script>
+    <script defer src="js/header.js"></script>
+
+    <!-- Title -->
+    <title>Rockstar 2.0</title>
+</head>
+<body>
+<!-- Header -->
+<header>
+    <div class="logo">
+        <a href="index.html" class="logo-text">
+            <img src="img/logo.png" alt="" data-lazy="false" fetchpriority="high">Rockstar
+        </a>
+    </div>
+
+    <ul>
+        <li><a href="index.html">Главная</a></li>
+        <li><a href="purchase.html">Покупка</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+    </ul>
+
+    <div class="header-actions">
+        <button onclick="location.href='/signup'" class="button">Регистрация</button>
+        <button class="open-ul"><i class="ph-bold ph-list"></i></button>
+    </div>
+</header>
+
+<main>
+    <section class="main-sect">
+        <div class="form-container animate-form">
+            <div class="text">
+                <h2>Вход в аккаунт</h2>
+                <p>Войдите в свой аккаунт, который вы <br> создавали</p>
+            </div>
+            <form class="form" id="signinForm" onsubmit="handleSignIn(event)">
+                <div class="input-group">
+                    <label for="login">Логин или почта</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="login" name="login" placeholder="Введите логин или почту" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="label-row">
+                        <label for="pass">Пароль</label>
+                        <a href="recovery.html" class="forgot">Забыли пароль?</a>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="password" id="pass" name="pass" placeholder="Введите пароль" required>
+                    </div>
+                </div>
+                <div id="signinError" class="error-message"></div>
+                <button type="submit" class="submit-btn">Войти в аккаунт</button>
+            </form>
+
+            <div class="account">
+                <p>Нет аккаунта? <a href="signup.html">Зарегистрировать</a></p>
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Rockstar</h3>
+                <p>© 2025 Rockstar Client. <br> Все права защищены</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Платформа</h3>
+                <ul>
+                    <li><a href="index.html">Главная</a></li>
+                    <li><a href="purchase.html">Покупка</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Аккаунт</h3>
+                <ul>
+                    <li><a href="signin.html">Вход</a></li>
+                    <li><a href="signup.html">Регистрация</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Контакты</h3>
+                <ul>
+                    <li><a href="https://t.me/rockclient">Телеграм</a></li>
+                    <li><a href="https://discord.gg/HstudsDCkH">Дискорд</a></li>
+                    <li><a href="https://vk.com/rockstarclient">ВКонтакте</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Соглашения</h3>
+                <ul>
+                    <li><a href="license.html">Лицензионное соглашение</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</main>
+</body>
+</html>

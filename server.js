@@ -11,22 +11,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Clean route rewrites for Rockstar
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/index', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
-app.get('/signin', (req, res) => res.sendFile(path.join(__dirname, 'signin.html')));
-app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'signup.html')));
-app.get('/purchase', (req, res) => res.sendFile(path.join(__dirname, 'purchase.html')));
-app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'faq.html')));
-app.get('/license', (req, res) => res.sendFile(path.join(__dirname, 'license.html')));
-
-// Static files
+// Static files (check public first, then root)
+app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }));
 app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 
+// Clean route rewrites for Rockstar
+const getFilePath = (file) => {
+    const pub = path.join(__dirname, 'public', file);
+    return fs.existsSync(pub) ? pub : path.join(__dirname, file);
+};
+
+app.get(['/', '/index', '/index.html'], (req, res) => res.sendFile(getFilePath('index.html')));
+app.get(['/profile', '/profile.html'], (req, res) => res.sendFile(getFilePath('profile.html')));
+app.get(['/signin', '/signin.html'], (req, res) => res.sendFile(getFilePath('signin.html')));
+app.get(['/signup', '/signup.html'], (req, res) => res.sendFile(getFilePath('signup.html')));
+app.get(['/purchase', '/purchase.html'], (req, res) => res.sendFile(getFilePath('purchase.html')));
+app.get(['/faq', '/faq.html'], (req, res) => res.sendFile(getFilePath('faq.html')));
+app.get(['/license', '/license.html'], (req, res) => res.sendFile(getFilePath('license.html')));
+
 // 1. Download launcher endpoint
-app.get('/download/launcher.exe', (req, res) => {
+app.get(['/download/launcher.exe', '/api/download/launcher.exe'], (req, res) => {
     let launcherPath = path.join(__dirname, 'launcher', 'NptProxy Launcher.exe');
     if (!fs.existsSync(launcherPath)) {
         launcherPath = path.join(__dirname, '..', 'mp', 'NptProxy Launcher.exe');
@@ -45,7 +49,7 @@ app.get('/download/launcher.exe', (req, res) => {
 });
 
 // 2. System Status
-app.get('/api/status', async (req, res) => {
+app.get(['/api/status', '/status'], async (req, res) => {
     try {
         const dbCheck = await pool.query('SELECT NOW()');
         res.json({
@@ -163,7 +167,7 @@ app.get(['/api/account/details', '/account/details'], async (req, res) => {
 
 // 6. Launcher Verification Endpoint (.EXE SYSTEM)
 // Правило: запустить лаунчер могут только plus и admin! Группа user блокируется.
-app.post('/api/launcher/verify', async (req, res) => {
+app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
     const { username, password, hwid } = req.body;
     if (!username || !password) {
         return res.status(400).json({
@@ -237,7 +241,7 @@ app.post('/api/launcher/verify', async (req, res) => {
 });
 
 // 7. Toggle / Change Group (user -> plus -> admin -> user)
-app.post(['/api/user/toggle-group', '/api/user/toggle-sub'], async (req, res) => {
+app.post(['/api/user/toggle-group', '/api/user/toggle-sub', '/user/toggle-group', '/user/toggle-sub'], async (req, res) => {
     const { userId, uid } = req.body;
     try {
         const userRes = await pool.query('SELECT id, uid, user_group FROM users WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
@@ -277,7 +281,7 @@ app.post(['/api/user/toggle-group', '/api/user/toggle-sub'], async (req, res) =>
 });
 
 // 8. Reset HWID
-app.post('/api/user/reset-hwid', async (req, res) => {
+app.post(['/api/user/reset-hwid', '/user/reset-hwid'], async (req, res) => {
     const { userId, uid } = req.body;
     try {
         await pool.query('UPDATE users SET hwid = NULL WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);

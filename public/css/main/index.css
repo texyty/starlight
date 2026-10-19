@@ -1,0 +1,365 @@
+/* ===== ROCKSTAR 2.0 MAIN PAGE STYLES ===== */
+
+main {
+    padding: 100px 12% 0;
+    overflow-x: hidden;
+}
+
+.main-sect {
+    position: relative;
+    padding: 80px 0 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 85vh;
+}
+
+.main-sect h1 {
+    font-size: 54px;
+    font-weight: 600;
+    letter-spacing: -1.5px;
+    line-height: 1.2;
+    color: #fff;
+    max-width: 900px;
+    margin-bottom: 40px;
+}
+
+.highlight {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 40px;
+    background: rgba(25, 25, 32, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    vertical-align: middle;
+    margin: 0 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 40px;
+    padding: 1px;
+    background: linear-gradient(149deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.15) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.highlight .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+}
+
+.highlight .text-content {
+    font-size: 26px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+/* Event badges on the right */
+.right-events {
+    position: absolute;
+    right: 0;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    pointer-events: none;
+}
+
+.highlight.status {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.highlight.status .icon.event {
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.highlight.status .icon.event.mine {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.highlight.status .icon.event.chest {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.highlight.status .icon.event.altar { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.highlight.status .icon.event.meteor { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+.highlight.status .icon.event.beacon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.highlight.status .icon.event.death { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.highlight.status .icon.event.vulcan { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+
+/* Stats block */
+.stats {
+    display: flex;
+    gap: 60px;
+    margin-top: 20px;
+}
+
+.stats .users h2, .stats .launches h2 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.stats p {
+    font-size: 15px;
+    color: var(--text-desc-on);
+}
+
+/* Pluses & Island Section */
+.pluses {
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+}
+
+.island {
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+}
+
+.island .upper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.island .upper h1 {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: #fff;
+}
+
+.server-events, .music, .other-statuses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.server-text h1, .music-text h1, .other-text h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.server-text p, .music-text p, .other-text p {
+    font-size: 16px;
+    color: var(--text-other-color);
+    line-height: 1.6;
+}
+
+.statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Music Stack */
+.music-stack {
+    position: relative;
+    height: 180px;
+}
+
+.highlight.music {
+    position: absolute;
+    width: 100%;
+    max-width: 420px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 24px;
+}
+
+.highlight.music-bg {
+    top: 15px;
+    left: 20px;
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.highlight.music-front {
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.highlight.music .upper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.highlight.music .cover {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.highlight.music .info .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.highlight.music .info .executor {
+    font-size: 12px;
+    color: var(--text-desc-on);
+}
+
+.highlight.music .middle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-desc-on);
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.line-done {
+    height: 100%;
+    background: #5e6ad2;
+    border-radius: 4px;
+}
+
+.highlight.music .down {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.highlight.music .control {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.highlight.music .control img, .highlight.music .repeat, .highlight.music .sc {
+    width: 18px;
+    height: 18px;
+    opacity: 0.8;
+}
+
+/* X-Ray / Other */
+.other.statuses {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.left-st {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.highlight.status.xray {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 20px;
+}
+
+.finded {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.finded .ore {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.finded .ore img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Mod Stack */
+.mod-stack {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.highlight.mod {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 24px;
+    max-width: 380px;
+}
+
+.highlight.mod img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.highlight.mod .mod-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.highlight.mod .mod-desc {
+    font-size: 12px;
+    color: var(--text-desc-on);
+    line-height: 1.4;
+}
+
+/* Animations */
+.animate-on-scroll {
+    opacity: 1;
+    transition: all 0.5s ease-out;
+}

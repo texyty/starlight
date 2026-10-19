@@ -1,0 +1,13 @@
+/* Adaptive for sign in/up */
+@media (max-width: 620px) {
+    main {
+        padding-top: 75px;
+    }
+    .form-container {
+        padding: 28px 20px;
+        border-radius: 22px;
+    }
+    .form-container .text h2 {
+        font-size: 22px;
+    }
+}

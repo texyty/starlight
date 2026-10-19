@@ -1,0 +1,199 @@
+    <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- Meta -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Performance -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preload" href="img/logo.png" as="image" fetchpriority="high">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main/sign_up.css" data-critical>
+    <link rel="stylesheet" href="css/header.css" data-critical>
+    <link rel="stylesheet" href="css/footer.css" data-async data-original-media="all" media="print" onload="this.onload=null;this.media='all'">
+    <link rel="stylesheet" href="css/sign_adaptive.css" data-async data-original-media="all" media="print" onload="this.onload=null;this.media='all'">
+
+    <!-- Phosphor Icons -->
+    <script defer src="js/performance.js"></script>
+    <script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
+    <script defer src="js/form-anim.js"></script>
+    <script defer src="js/header.js"></script>
+    <script defer src="js/auth.js"></script>
+
+    <!-- Title -->
+    <title>Rockstar 2.0</title>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <a href="index.html" class="logo-text">
+                <img src="img/logo.png" alt="" data-lazy="false" fetchpriority="high">Rockstar
+            </a>
+        </div>
+
+        <ul>
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="purchase.html">Покупка</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+        </ul>
+
+        <div class="header-actions">
+            <button onclick="location.href='/signup'" class="button">Регистрация</button>
+            <button class="open-ul"><i class="ph-bold ph-list"></i></button>
+        </div>
+    </header>
+
+    <main>
+        <section class="main-sect">
+            <div class="form-container animate-form">
+                <div class="text">
+                    <h2>Восстановление</h2>
+                    <p>Введите почту, которая использовалась <br> для регистрации аккаунта</p>
+                </div>
+                <form class="form" id="recoveryForm">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="email">Почта</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="email" name="email" placeholder="Введите почту" required>
+                        </div>
+                    </div>
+                    <div id="recoveryError" style="color: #f44336; margin-top: 10px; text-align: center; display: none;"></div>
+                    <div id="recoverySuccess" style="color: #4CAF50; margin-top: 10px; text-align: center; display: none;"></div>
+                    <button type="submit" class="submit-btn">Отправить письмо</button>
+                </form>
+            </div>
+        </section>
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Rockstar</h3>
+                    <p>© 2025 Rockstar Client. <br> Все права защищены</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Платформа</h3>
+                    <ul>
+                        <li><a href="index.html">Главная</a></li>
+                        <li><a href="purchase.html">Покупка</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Аккаунт</h3>
+                    <ul>
+                        <li><a href="signin.html">Вход</a></li>
+                        <li><a href="signup.html">Регистрация</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Контакты</h3>
+                    <ul>
+                        <li><a href="https://t.me/rockclient">Телеграм</a></li>
+                        <li><a href="https://discord.gg/HstudsDCkH">Дискорд</a></li>
+                        <li><a href="https://vk.com/rockstarclient">ВКонтакте</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Соглашения</h3>
+                    <ul> 
+                        <li><a href="license.html">Лицензионное соглашение</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const recoveryForm = document.getElementById('recoveryForm');
+            const recoveryError = document.getElementById('recoveryError');
+            const recoverySuccess = document.getElementById('recoverySuccess');
+            const submitBtn = recoveryForm?.querySelector('.submit-btn');
+
+            if (recoveryForm) {
+                recoveryForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    if (recoveryError) {
+                        recoveryError.style.display = 'none';
+                        recoveryError.textContent = '';
+                    }
+                    if (recoverySuccess) {
+                        recoverySuccess.style.display = 'none';
+                        recoverySuccess.textContent = '';
+                    }
+
+                    const email = document.getElementById('email').value.trim();
+                    
+                    if (!email) {
+                        if (recoveryError) {
+                            recoveryError.textContent = 'Введите почту';
+                            recoveryError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Отправка...';
+                    }
+
+                    try {
+                        const formData = new URLSearchParams();
+                        formData.append('username', email);
+
+                        const API_BASE_URL = "https://rockstar.pub";
+                        const response = await fetch(`${API_BASE_URL}/recovery/password`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            credentials: 'include',
+                            mode: 'cors',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (data && data.success) {
+                            if (recoverySuccess) {
+                                recoverySuccess.textContent = data.success;
+                                recoverySuccess.style.display = 'block';
+                            }
+                            if (recoveryForm) {
+                                recoveryForm.reset();
+                            }
+                        } else if (data && data.error) {
+                            if (recoveryError) {
+                                recoveryError.textContent = data.error;
+                                recoveryError.style.display = 'block';
+                            }
+                        } else {
+                            throw new Error('Неизвестная ошибка');
+                        }
+                    } catch (error) {
+                        console.error('Ошибка восстановления пароля:', error);
+                        if (recoveryError) {
+                            recoveryError.textContent = error.message || 'Ошибка при отправке запроса';
+                            recoveryError.style.display = 'block';
+                        }
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Отправить письмо';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
