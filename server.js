@@ -32,21 +32,23 @@ app.get(['/admin', '/admin.html'], (req, res) => res.sendFile(getFilePath('admin
 
 // 1. Download launcher endpoint
 app.get(['/download/launcher.exe', '/api/download/launcher.exe'], (req, res) => {
-    let launcherPath = path.join(__dirname, 'launcher', 'NptProxy Launcher.exe');
+    let launcherPath = path.join(__dirname, 'launcher', 'Starlight-Launcher.exe');
     if (!fs.existsSync(launcherPath)) {
-        launcherPath = path.join(__dirname, '..', 'mp', 'NptProxy Launcher.exe');
+        launcherPath = path.join(__dirname, 'launcher', 'NptProxy Launcher.exe');
+    }
+    if (!fs.existsSync(launcherPath)) {
+        launcherPath = path.join(__dirname, '..', 'mp', 'dist', 'Starlight Client-Portable.exe');
     }
     if (fs.existsSync(launcherPath)) {
-        return res.download(launcherPath, 'Starlight-Launcher.exe', (err) => {
+        return res.download(launcherPath, 'Starlight-Client.exe', (err) => {
             if (err && !res.headersSent) {
                 res.status(404).send('Лаунчер еще не собран или файл отсутствует.');
             }
         });
     }
-    if (process.env.LAUNCHER_DOWNLOAD_URL) {
-        return res.redirect(process.env.LAUNCHER_DOWNLOAD_URL);
-    }
-    res.redirect('https://github.com/texyty/starlight/releases/latest');
+    // Прямая ссылка на скачивание без промежуточных страниц GitHub:
+    const directUrl = process.env.LAUNCHER_DOWNLOAD_URL || 'https://github.com/texyty/starlight-release/releases/download/v.1.0/Starlight.Client.exe';
+    res.redirect(directUrl);
 });
 
 // 2. System Status
