@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-const { pool, initDb } = require('./db');
+const { pool, initDb, missingDbEnv, dbConfigError } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -98,6 +98,43 @@ const checkAdminAuth = async (req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }));
 app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 
+// ==========================================================================
+// ЛЕНИВАЯ ИНИЦИАЛИЗАЦИЯ БАЗЫ (нужно для Vercel/Render и подобных хостингов).
+// В serverless-режиме функция запускается "на каждый запрос": глобальный initDb()
+// может не успеть создать таблицы до первого обращения к API. Здесь мы один раз
+// дожидаемся инициализации при первом же запросе и запоминаем результат.
+// ==========================================================================
+let dbReadyPromise = null;
+function ensureDbReady() {
+    if (dbReadyPromise) return dbReadyPromise;
+    if (missingDbEnv().length > 0) {
+        // Конфигурации нет — не пытаемся подключаться, вернём понятную ошибку.
+        dbReadyPromise = Promise.reject(new Error(dbConfigError()));
+        dbReadyPromise.catch(() => {}); // глушим unhandled rejection
+        return dbReadyPromise;
+    }
+    dbReadyPromise = initDb().catch((err) => {
+        console.error('[Supabase Init]:', err.message);
+        dbReadyPromise = null; // дать шанс на повторную попытку
+        throw err;
+    });
+    return dbReadyPromise;
+}
+
+// Все /api-запросы ждут готовности БД
+app.use('/api', async (req, res, next) => {
+    try {
+        await ensureDbReady();
+        next();
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: 'База данных недоступна',
+            detail: err.message
+        });
+    }
+});
+
 // Clean route rewrites for Starlight
 const getFilePath = (file) => {
     const pub = path.join(__dirname, 'public', file);
@@ -136,6 +173,10 @@ app.get(['/download/launcher.exe', '/api/download/launcher.exe'], (req, res) => 
 
 // 2. System Status
 app.get(['/api/status', '/status'], async (req, res) => {
+    const cfgErr = dbConfigError();
+    if (cfgErr) {
+        return res.status(500).json({ status: 'error', database: 'не настроена', detail: cfgErr });
+    }
     try {
         const dbCheck = await pool.query('SELECT NOW()');
         res.json({
@@ -204,6 +245,11 @@ const handleLogin = async (req, res) => {
         return res.status(400).json({ success: false, error: 'Введите логин и пароль' });
     }
 
+    const cfgErr = dbConfigError();
+    if (cfgErr) {
+        return res.status(500).json({ success: false, error: 'База данных не настроена', detail: cfgErr });
+    }
+
     try {
         const result = await pool.query(`
             SELECT uid, id, username, password, user_group, balance, hwid, created_at, last_login
@@ -236,7 +282,10 @@ const handleLogin = async (req, res) => {
         });
     } catch (err) {
         console.error('Login error:', err);
-        res.status(500).json({ success: false, error: 'Ошибка сервера' });
+        if (missingDbEnv().length > 0) {
+            return res.status(500).json({ success: false, error: 'База данных не настроена', detail: dbConfigError() });
+        }
+        res.status(500).json({ success: false, error: 'Ошибка сервера', detail: err.message });
     }
 };
 
@@ -726,6 +775,18 @@ if (require.main === module) {
             console.log(`[UID System] Sequential (1, 2, 3...)`);
             console.log(`[Groups] user (no launch) | plus (launch ok) | admin (launch ok)`);
             console.log(`=======================================================`);
+        });
+    }).catch((err) => {
+        // Сервер всё равно поднимаем — чтобы /api/status и API отвечали внятной
+        // ошибкой вместо падения процесса. API-запросы будут возвращать 500
+        // с точной причиной (см. middleware ensureDbReady).
+        console.error('[Starlight] База данных недоступна при старте:', err.message);
+        if (missingDbEnv().length > 0) {
+            console.error('[Starlight] ' + dbConfigError());
+        }
+        app.listen(PORT, () => {
+            console.log(`[Starlight Server] Запущен на http://localhost:${PORT} (БЕЗ базы данных)`);
+            console.log('[Starlight] Исправь настройки БД и перезапусти сервер.');
         });
     });
 } else {

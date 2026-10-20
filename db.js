@@ -22,9 +22,34 @@ const pool = new Pool({
     connectionTimeoutMillis: 5000,
 });
 
+// Проверка конфигурации. Если переменные окружения не заданы (например, на Vercel
+// их забыли добавить), подключение к базе упадёт с невнятной ошибкой 500.
+// Эта функция даёт точный ответ, чего не хватает.
+function missingDbEnv() {
+    const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD'];
+    return required.filter((k) => !process.env[k] || !String(process.env[k]).trim());
+}
+
+function dbConfigError() {
+    const missing = missingDbEnv();
+    if (missing.length === 0) return null;
+    return `Не заданы переменные окружения: ${missing.join(', ')}. ` +
+        `Добавьте их в настройках хостинга (Vercel → Settings → Environment Variables) ` +
+        `или в файле .env при локальном запуске.`;
+}
+
+// Ошибка простаивающего соединения не должна валить весь сервер
+// (на Vercel это приводит к падению функции с невнятной ошибкой).
+pool.on('error', (err) => {
+    console.error('[DB] Ошибка пула соединений:', err.message);
+});
+
 async function initDb() {
-    const client = await pool.connect();
+    let client;
     try {
+        // connect() ДОЛЖЕН быть внутри try: иначе ошибка подключения
+        // (например, ECONNREFUSED при пустом DB_HOST) валит весь процесс.
+        client = await pool.connect();
         console.log('[Supabase] Initializing database schema...');
         
         await client.query(`
@@ -69,10 +94,13 @@ async function initDb() {
 
         console.log('[Supabase] Database schema initialized successfully.');
     } catch (err) {
-        console.error('[Supabase] Error initializing database:', err);
+        console.error('[Supabase] Error initializing database:', err.message);
+        // Пробрасываем ошибку наружу: вызывающий код (ensureDbReady) должен знать,
+        // что БД не готова. Иначе API молча получит нерабочее соединение.
+        throw err;
     } finally {
-        client.release();
+        if (client) client.release();
     }
 }
 
-module.exports = { pool, initDb };
+module.exports = { pool, initDb, missingDbEnv, dbConfigError };
