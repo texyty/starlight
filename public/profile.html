@@ -493,7 +493,7 @@
             try {
                 const res = await fetch('/api/user/topup', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({ userId: userData.id, uid: userData.uid, amount })
                 });
                 const data = await res.json();
@@ -502,6 +502,9 @@
                     localStorage.setItem('user', JSON.stringify(userData));
                     renderUser(userData);
                     alert(data.message);
+                } else if (res.status === 403) {
+                    // Пополнение баланса вручную доступно только администратору.
+                    alert('Пополнение баланса вручную доступно только администратору. Для оплаты используйте страницу «Купить».');
                 } else {
                     alert(data.error || 'Ошибка пополнения');
                 }

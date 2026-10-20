@@ -35,9 +35,9 @@ npm start
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
 4. Добавьте переменные окружения (Environment Variables) из `.env.example`:
-   - `DB_HOST`: `aws-0-eu-west-1.pooler.supabase.com`
+   - `DB_HOST`: хост вашей базы данных
    - `DB_PORT`: `5432`
    - `DB_NAME`: `postgres`
-   - `DB_USER`: `postgres.nzkrfapnmrmyccvsojab`
-   - `DB_PASSWORD`: `123porevo333@`
+   - `DB_USER`: пользователь базы данных
+   - `DB_PASSWORD`: пароль базы данных
 5. Нажмите **Deploy** — через минуту ваш сайт будет доступен во всем интернете с HTTPS!

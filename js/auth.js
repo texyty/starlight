@@ -1,9 +1,21 @@
 // auth.js — Starlight Authentication & Session Handler
 
+// Токен, выданный сервером при входе/регистрации. Используется для доступа к
+// защищённым эндпоинтам (пополнение баланса, админка) вместо доверия имени.
+function getAuthToken() {
+    return localStorage.getItem('authToken') || '';
+}
+
+function authHeaders(extra) {
+    const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    const t = getAuthToken();
+    if (t) h['x-auth-token'] = t;
+    return h;
+}
+
 function checkAuth() {
     const user = localStorage.getItem('user');
-    const token = localStorage.getItem('jwtToken');
-    return !!(user || token);
+    return !!user;
 }
 
 function redirectToSignin() {
@@ -13,6 +25,7 @@ function redirectToSignin() {
 function logout() {
     localStorage.removeItem('user');
     localStorage.removeItem('jwtToken');
+    localStorage.removeItem('authToken');
     window.location.href = 'index.html';
 }
 
@@ -45,7 +58,8 @@ async function handleSignIn(event) {
 
         // Store session
         localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('jwtToken', 'jwt_' + (data.user.uid || data.user.id) + '_' + Date.now());
+        if (data.token) localStorage.setItem('authToken', data.token);
+        localStorage.setItem('jwtToken', data.token || '');
 
         window.location.href = 'profile.html';
     } catch (err) {
@@ -88,7 +102,8 @@ async function handleRegistration(event) {
         }
 
         localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('jwtToken', 'jwt_' + (data.user.uid || data.user.id) + '_' + Date.now());
+        if (data.token) localStorage.setItem('authToken', data.token);
+        localStorage.setItem('jwtToken', data.token || '');
 
         window.location.href = 'profile.html';
     } catch (err) {

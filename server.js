@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { pool, initDb } = require('./db');
 
 const app = express();
@@ -10,6 +12,87 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ==========================================================================
+// Хеширование паролей (scrypt из встроенного crypto — без внешних зависимостей).
+// Формат: scrypt$<salt_hex>$<hash_hex>. Открытый текст больше не принимается.
+// ==========================================================================
+function hashPassword(plain) {
+    const salt = crypto.randomBytes(16);
+    const hash = crypto.scryptSync(String(plain), salt, 64);
+    return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+
+function verifyPassword(plain, stored) {
+    if (!stored || typeof stored !== 'string') return false;
+    const parts = stored.split('$');
+    if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
+    try {
+        const salt = Buffer.from(parts[1], 'hex');
+        const expected = Buffer.from(parts[2], 'hex');
+        const actual = crypto.scryptSync(String(plain), salt, expected.length);
+        return crypto.timingSafeEqual(expected, actual);
+    } catch (e) {
+        return false;
+    }
+}
+
+// ==========================================================================
+// Аутентификация администратора (объявлена ДО роутов!).
+// Раньше права определялись по имени пользователя, которое присылал КЛИЕНТ
+// (adminUsername / x-admin-user), причём при отсутствии имени подставлялся
+// 'texyty' — то есть запрос без параметров получал админ-доступ.
+// Теперь права подтверждаются серверным токеном, выданным при входе.
+// ==========================================================================
+const authTokens = new Map(); // token -> { userId, username, group, createdAt }
+
+function issueToken(user) {
+    const token = 'stl_' + crypto.randomBytes(24).toString('hex');
+    authTokens.set(token, {
+        userId: user.id,
+        username: user.username,
+        group: (user.user_group || user.group || 'user').toLowerCase(),
+        createdAt: Date.now()
+    });
+    return token;
+}
+
+function resolveToken(req) {
+    const raw = (req.headers && req.headers['x-auth-token']) ||
+                (req.body && req.body.authToken) ||
+                (req.query && req.query.authToken) || '';
+    if (!raw) return null;
+    const key = String(raw).trim();
+    const entry = authTokens.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.createdAt > 7 * 24 * 60 * 60 * 1000) {
+        authTokens.delete(key);
+        return null;
+    }
+    return entry;
+}
+
+const checkAdminAuth = async (req, res, next) => {
+    const entry = resolveToken(req);
+    if (!entry) {
+        return res.status(403).json({ success: false, error: 'Доступ запрещен: требуется вход в аккаунт' });
+    }
+    if (entry.group !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Недостаточно прав администратора' });
+    }
+    try {
+        const r = await pool.query('SELECT user_group FROM users WHERE id = $1', [entry.userId]);
+        if (r.rows.length === 0) {
+            return res.status(403).json({ success: false, error: 'Доступ запрещен: пользователь не найден' });
+        }
+        if ((r.rows[0].user_group || 'user').toLowerCase() !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Недостаточно прав администратора' });
+        }
+        next();
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+};
 
 // Static files (check public first, then root)
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }));
@@ -89,16 +172,19 @@ const handleRegister = async (req, res) => {
             INSERT INTO users (uid, username, password, user_group, subscription_status, subscription_type, role, balance)
             VALUES ($1, $2, $3, 'user', 'NO_SUB', 'user', 'user', 0.00)
             RETURNING uid, id, username, user_group, balance, created_at
-        `, [nextUid, username, password]);
+        `, [nextUid, username, hashPassword(password)]);
 
         const user = result.rows[0];
         user.group = user.user_group;
         user.balance = parseFloat(user.balance || 0).toFixed(2);
+        user.role = 'user';
+        user.subscription_status = 'NO_SUB';
+        user.subscription_type = 'user';
 
         res.json({
             success: true,
             user,
-            token: 'jwt_' + user.uid + '_' + Date.now(),
+            token: issueToken({ id: user.id, username: user.username, user_group: 'user' }),
             message: `Регистрация успешна! Ваш UID: #${user.uid}. Группа: user`
         });
     } catch (err) {
@@ -125,7 +211,7 @@ const handleLogin = async (req, res) => {
             WHERE LOWER(username) = LOWER($1)
         `, [username]);
 
-        if (result.rows.length === 0 || result.rows[0].password !== password) {
+        if (result.rows.length === 0 || !verifyPassword(password, result.rows[0].password)) {
             return res.status(401).json({ success: false, error: 'Неверный логин или пароль' });
         }
 
@@ -135,12 +221,17 @@ const handleLogin = async (req, res) => {
         user.uid = user.uid || user.id;
         user.balance = parseFloat(user.balance || 0).toFixed(2);
 
+        const isAllowed = (user.group === 'plus' || user.group === 'admin');
+        user.role = user.group.toUpperCase();
+        user.subscription_status = isAllowed ? 'ACTIVE' : 'NO_SUB';
+        user.subscription_type = user.group.toUpperCase();
+
         await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
         res.json({
             success: true,
             user,
-            token: 'jwt_' + user.uid + '_' + Date.now(),
+            token: issueToken({ id: user.id, username: user.username, user_group: user.group }),
             message: 'Авторизация успешна'
         });
     } catch (err) {
@@ -153,7 +244,10 @@ app.post(['/api/auth/login', '/authorization', '/auth/login'], handleLogin);
 
 // 5. User details
 app.get(['/api/account/details', '/account/details'], async (req, res) => {
-    const userId = req.query.id || req.query.uid;
+    // Если передан серверный токен — доверяем ТОЛЬКО ему (сессия проверяется на сервере).
+    // Это используется фронтендом (auth-check.js) для проверки актуальности сессии.
+    const entry = resolveToken(req);
+    const userId = entry ? entry.userId : (req.query.id || req.query.uid);
     if (!userId) return res.status(400).json({ error: 'User ID missing' });
     try {
         const result = await pool.query('SELECT uid, id, username, user_group, balance, hwid FROM users WHERE id = $1 OR uid = $2', [userId, userId]);
@@ -188,7 +282,7 @@ app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
             WHERE LOWER(username) = LOWER($1)
         `, [username.trim()]);
 
-        if (result.rows.length === 0 || result.rows[0].password !== password.trim()) {
+        if (result.rows.length === 0 || !verifyPassword(password.trim(), result.rows[0].password)) {
             return res.status(401).json({
                 success: false,
                 allowed: false,
@@ -274,7 +368,8 @@ app.post(['/api/launcher/verify', '/launcher/verify'], async (req, res) => {
 });
 
 // 7. Toggle / Change Group (user -> plus -> admin -> user)
-app.post(['/api/user/toggle-group', '/api/user/toggle-sub', '/user/toggle-group', '/user/toggle-sub'], async (req, res) => {
+// ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА (раньше эндпоинт был вообще без проверки прав).
+app.post(['/api/user/toggle-group', '/api/user/toggle-sub', '/user/toggle-group', '/user/toggle-sub'], checkAdminAuth, async (req, res) => {
     const { userId, uid } = req.body;
     try {
         const userRes = await pool.query('SELECT id, uid, user_group FROM users WHERE id = $1 OR uid = $2', [userId || uid, uid || userId]);
@@ -315,7 +410,18 @@ app.post(['/api/user/toggle-group', '/api/user/toggle-sub', '/user/toggle-group'
 
 // 8. Reset HWID — стоимость 199 рублей
 app.post(['/api/user/reset-hwid', '/user/reset-hwid'], async (req, res) => {
-    const { userId, uid } = req.body;
+    // Если запрос с токеном — работаем ТОЛЬКО со своим аккаунтом (иначе можно было
+    // подставить чужой uid и потратить баланс другого человека). Админ может указать цель явно.
+    const entry = resolveToken(req);
+    let userId, uid;
+    if (entry) {
+        const isAdmin = entry.group === 'admin';
+        userId = isAdmin ? req.body.userId : entry.userId;
+        uid = isAdmin ? req.body.uid : entry.userId;
+    } else {
+        userId = req.body.userId;
+        uid = req.body.uid;
+    }
     const HWID_COST = 199.00;
 
     try {
@@ -361,7 +467,10 @@ app.post(['/api/user/reset-hwid', '/user/reset-hwid'], async (req, res) => {
 
 // 8.1. Bind HWID (привязка HWID к аккаунту)
 app.post(['/api/user/bind-hwid', '/user/bind-hwid'], async (req, res) => {
-    const { userId, uid, hwid } = req.body;
+    const { hwid } = req.body;
+    const entry = resolveToken(req);
+    const userId = entry ? entry.userId : req.body.userId;
+    const uid = entry ? entry.userId : req.body.uid;
     if (!hwid || !hwid.trim()) {
         return res.status(400).json({ success: false, error: 'HWID не указан' });
     }
@@ -385,8 +494,8 @@ app.post(['/api/user/bind-hwid', '/user/bind-hwid'], async (req, res) => {
     }
 });
 
-// 9. Topup Balance (пополнение счета)
-app.post(['/api/user/topup', '/user/topup'], async (req, res) => {
+// 9. Topup Balance (пополнение счета — ТОЛЬКО ДЛЯ АДМИНИСТРАТОРОВ)
+app.post(['/api/user/topup', '/user/topup'], checkAdminAuth, async (req, res) => {
     const { userId, uid, amount } = req.body;
     const addVal = parseFloat(amount);
     if (isNaN(addVal) || addVal <= 0) {
@@ -417,32 +526,8 @@ app.post(['/api/user/topup', '/user/topup'], async (req, res) => {
     }
 });
 
-// 10. Admin Endpoints (для texyty и группы admin)
-const checkAdminAuth = async (req, res, next) => {
-    const adminUser = (req.body.adminUsername || req.query.adminUsername || req.headers['x-admin-user'] || '').trim();
-    const adminUid = req.body.adminUid || req.query.adminUid;
-
-    try {
-        let q = 'SELECT uid, username, user_group FROM users WHERE LOWER(username) = LOWER($1)';
-        let params = [adminUser || 'texyty'];
-        if (adminUid) {
-            q = 'SELECT uid, username, user_group FROM users WHERE uid = $1 OR LOWER(username) = LOWER($2)';
-            params = [adminUid, adminUser || 'texyty'];
-        }
-        const r = await pool.query(q, params);
-        if (r.rows.length === 0) {
-            return res.status(403).json({ success: false, error: 'Доступ запрещен: администратор не найден' });
-        }
-        const u = r.rows[0];
-        const isAuth = (u.user_group === 'admin' || u.username.toLowerCase() === 'texyty');
-        if (!isAuth) {
-            return res.status(403).json({ success: false, error: 'Недостаточно прав администратора' });
-        }
-        next();
-    } catch (e) {
-        res.status(500).json({ success: false, error: e.message });
-    }
-};
+// 10. Admin Endpoints
+// checkAdminAuth объявлен в начале файла (токенная проверка) — здесь ничего не дублируем.
 
 // Admin: Get all users
 app.get(['/api/admin/users', '/admin/users'], checkAdminAuth, async (req, res) => {
@@ -637,7 +722,7 @@ if (require.main === module) {
             console.log(`[Purchase Page] http://localhost:${PORT}/purchase.html`);
             console.log(`[Sign In] http://localhost:${PORT}/signin.html`);
             console.log(`[Launcher Verify API] http://localhost:${PORT}/api/launcher/verify`);
-            console.log(`[Supabase DB] aws-0-eu-west-1.pooler.supabase.com:5432`);
+            console.log(`[Supabase DB] ${process.env.DB_HOST || 'не задан (см. .env)'}:${process.env.DB_PORT || 5432}`);
             console.log(`[UID System] Sequential (1, 2, 3...)`);
             console.log(`[Groups] user (no launch) | plus (launch ok) | admin (launch ok)`);
             console.log(`=======================================================`);

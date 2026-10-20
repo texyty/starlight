@@ -1,11 +1,21 @@
 const { Pool } = require('pg');
+const crypto = require('crypto');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Хеширование паролей (тот же формат, что и в server.js): scrypt$<salt_hex>$<hash_hex>
+function hashPassword(plain) {
+    const salt = crypto.randomBytes(16);
+    const hash = crypto.scryptSync(String(plain), salt, 64);
+    return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
 
 const pool = new Pool({
-    host: process.env.DB_HOST || 'aws-0-eu-west-1.pooler.supabase.com',
+    host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME || 'postgres',
-    user: process.env.DB_USER || 'postgres.nzkrfapnmrmyccvsojab',
-    password: process.env.DB_PASSWORD || '123porevo333@',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     ssl: { rejectUnauthorized: false },
     max: 10,
     idleTimeoutMillis: 30000,
@@ -42,8 +52,8 @@ async function initDb() {
         if (adminCheck.rows.length === 0) {
             await client.query(`
                 INSERT INTO users (uid, username, password, user_group, subscription_status, subscription_type, role)
-                VALUES (1, 'Admin', '1337', 'admin', 'ACTIVE', 'ADMIN', 'admin')
-            `);
+                VALUES (1, 'Admin', $1, 'admin', 'ACTIVE', 'ADMIN', 'admin')
+            `, [hashPassword('1337')]);
             console.log('[Supabase] Created default Admin account (Admin / 1337) with group: admin');
         }
 
@@ -52,8 +62,8 @@ async function initDb() {
         if (userCheck.rows.length === 0) {
             await client.query(`
                 INSERT INTO users (uid, username, password, user_group, subscription_status, subscription_type, role)
-                VALUES (2, 'Player', '1234', 'user', 'NO_SUB', 'user', 'user')
-            `);
+                VALUES (2, 'Player', $1, 'user', 'NO_SUB', 'user', 'user')
+            `, [hashPassword('1234')]);
             console.log('[Supabase] Created default Player account (Player / 1234) with group: user');
         }
 

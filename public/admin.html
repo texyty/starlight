@@ -301,7 +301,7 @@
 
         async function loadUsers() {
             try {
-                const res = await fetch(`/api/admin/users?adminUsername=${encodeURIComponent(currentUser.username)}&adminUid=${currentUser.uid || currentUser.id}`);
+                const res = await fetch('/api/admin/users', { headers: authHeaders() });
                 const data = await res.json();
                 if (!data.success) {
                     alert(data.error || 'Ошибка загрузки пользователей');
@@ -395,10 +395,8 @@
             try {
                 const res = await fetch('/api/admin/update-group', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({
-                        adminUsername: currentUser.username,
-                        adminUid: currentUser.uid || currentUser.id,
                         targetUid,
                         group: newGroup
                     })
@@ -426,10 +424,8 @@
             try {
                 const res = await fetch('/api/admin/update-balance', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({
-                        adminUsername: currentUser.username,
-                        adminUid: currentUser.uid || currentUser.id,
                         targetUid,
                         amount,
                         mode: 'add'
@@ -452,10 +448,8 @@
             try {
                 const res = await fetch('/api/admin/reset-hwid', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({
-                        adminUsername: currentUser.username,
-                        adminUid: currentUser.uid || currentUser.id,
                         targetUid
                     })
                 });
@@ -476,10 +470,8 @@
             try {
                 const res = await fetch('/api/admin/delete-user', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({
-                        adminUsername: currentUser.username,
-                        adminUid: currentUser.uid || currentUser.id,
                         targetUid
                     })
                 });
