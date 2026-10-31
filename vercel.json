@@ -6,5 +6,8 @@
     { "source": "/authorization", "destination": "/api" },
     { "source": "/account/(.*)", "destination": "/api" },
     { "source": "/download/(.*)", "destination": "/api" }
+  ],
+  "crons": [
+    { "path": "/api/status", "schedule": "0 6 * * *" }
   ]
 }
